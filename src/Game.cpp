@@ -12,6 +12,7 @@ Game::Game(RenderWindow* _window)
     window = _window;
 
     view = View(Vector2f(0, 0), Vector2f(1280, 720));
+    hudView = View(Vector2f(0, 0), Vector2f(1280, 720));
     window->setView(view);
 }
 
@@ -23,6 +24,8 @@ void Game::initialize()
     textures["maze2.png"].setRepeated(true);
 
     resetGame();
+
+    font.loadFromFile("font/TheJewishBitmap.ttf");
 }
 
 void Game::resetGame()
@@ -147,7 +150,8 @@ void Game::update()
 
     if (totalTime.asSeconds() > eventTimes[EVENT_VIEW_ZOOM])
     {
-        zoomSpeed += zoomAcceleration * dt.asSeconds();
+        if (zoomSpeed < MAX_ZOOM_SPEED)
+            zoomSpeed += zoomAcceleration * dt.asSeconds();
         zoom += zoomSpeed * zoomDirection;
         if (zoom > MAX_ZOOM)
             zoomDirection = -1;
@@ -208,6 +212,20 @@ void Game::draw()
     window->draw(world);
 
     player->draw(window);
+
+    window->setView(hudView);
+
+    Text time(std::to_string(totalTime.asSeconds()), font);
+    time.setCharacterSize(64);
+
+    if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_BG])
+        time.setColor(timeToRainbow(totalTime.asMilliseconds() * WORLD_RAINDOW_MULT2));
+    else
+        time.setColor(Color::Black);
+
+    time.setPosition(Vector2f(-630, -360));
+    std::cout << time.getPosition().x << " " << time.getPosition().y << "\n";
+    window->draw(time);
 
     window->display();
 }

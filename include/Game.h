@@ -32,9 +32,10 @@ class Game
         const float GRAVITY = 98.1;
         const float DEGREES_PER_OBSTACLE = 18;
         const float OBSTACLE_POS_DEVIATION = 2;
-        const float NEXT_EVENT_TIME = 1;
+        const float NEXT_EVENT_TIME = 12;
         const float MAX_ZOOM = 1.3;
         const float MIN_ZOOM = 0.8;
+        const float MAX_ZOOM_SPEED = 0.1;
         const float WORLD_RAINDOW_MULT = 0.5;
         const float WORLD_RAINDOW_MULT2 = 0.6;
 
@@ -68,6 +69,7 @@ class Game
     private:
         RenderWindow* window;
         View view;
+        View hudView;
 
         Time dt;
         Time totalTime;
@@ -104,7 +106,7 @@ class Game
 
         float zoomDirection = 1;
         float zoomSpeed = 0.001;
-        float zoomAcceleration = 0.005;
+        float zoomAcceleration = 0.00005;
         float zoom = 1;
 
         float viewRotation = 0.0;
