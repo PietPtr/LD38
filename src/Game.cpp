@@ -15,6 +15,11 @@ void Game::initialize()
 {
     loadAudio(audioFileNames);
     loadTextures(textureFileNames);
+
+    view = View(Vector2f(0, 0), Vector2f(1280, 720));
+    window->setView(view);
+
+    player = new Player();
 }
 
 void Game::update()
@@ -51,18 +56,40 @@ void Game::update()
     dt = clock.restart();
     totalTime += dt;
 
-    if (frame % 100 == 0)
-        sfx["test.wav"]->play();
+    player->update(dt.asSeconds());
+
+    view.setCenter(polarToVector(player->getMinDistance(), player->getAngle() + VIEW_ANGLE_OFFSET));
+    view.setSize(16*5, 9*5);
+    view.setRotation(player->getAngle() + 90 + VIEW_ANGLE_OFFSET);
+
+    if (Keyboard::isKeyPressed(Keyboard::V)) {
+        view.setCenter(0, 0);
+        view.setSize(1280, 720);
+        view.setRotation(0);
+    }
 
     frame++;
 }
 
 void Game::draw()
 {
-    window->clear();
+    window->clear(Color::White);
 
-    Sprite test(textures["test.png"]);
-    window->draw(test);
+    window->setView(view);
+
+    RectangleShape marker(Vector2f(4, 1));
+    marker.setPosition(polarToVector(WORLDSIZE, 5));
+    marker.setRotation(5);
+    marker.setFillColor(Color(0, 0, 0));
+    marker.setOrigin(0.5, 0);
+    window->draw(marker);
+
+    CircleShape world = CircleShape(WORLDSIZE, 1024);
+    world.setFillColor(Color(0,0,0));
+    world.setOrigin(Vector2f(WORLDSIZE, WORLDSIZE));
+    window->draw(world);
+
+    player->draw(window);
 
     window->display();
 }
@@ -109,4 +136,13 @@ int Game::randint(int low, int high)
     srand(totalTime.asMicroseconds() * value * rand());
 
     return value;
+}
+
+sf::Vector2f Game::polarToVector(float distance, float angle)
+{
+    sf::Vector2f result;
+    result.x = cos(angle * 0.0174532925) * distance;
+    result.y = sin(angle * 0.0174532925) * distance;
+
+    return result;
 }
