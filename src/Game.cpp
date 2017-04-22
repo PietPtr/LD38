@@ -20,6 +20,8 @@ void Game::initialize()
     window->setView(view);
 
     player = new Player();
+
+    textures["maze.png"].setRepeated(true);
 }
 
 void Game::update()
@@ -85,8 +87,11 @@ void Game::draw()
     window->draw(marker);
 
     CircleShape world = CircleShape(WORLDSIZE, 1024);
-    world.setFillColor(Color(0,0,0));
     world.setOrigin(Vector2f(WORLDSIZE, WORLDSIZE));
+    world.setTexture(&textures["maze.png"]);
+    world.setTextureRect({ 0, 0, 200, 200 });
+    world.setOutlineColor(Color(0,0,0));
+    world.setOutlineThickness(-4);
     window->draw(world);
 
     player->draw(window);

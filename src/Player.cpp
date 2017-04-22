@@ -5,9 +5,9 @@ using namespace sf;
 
 Player::Player()
 {
-    distance = Game::instance->WORLDSIZE + radius - 0.3;
+    distance = Game::instance->WORLDSIZE + radius;
     minDistance = distance;
-    JUMP_ALLOWED_DISTANCE = minDistance + 0.3;
+    JUMP_ALLOWED_DISTANCE = minDistance;
     state = STATE_RUNNING;
 }
 
@@ -43,7 +43,7 @@ void Player::update(float dt)
             }
             break;
         case STATE_JUMPING:
-            if (distance < JUMP_ALLOWED_DISTANCE && verticalSpeed < 1)
+            if (distance < JUMP_ALLOWED_DISTANCE)
             {
                 state = STATE_RUNNING;
             }
@@ -54,9 +54,10 @@ void Player::update(float dt)
                 state = STATE_BUILDING_UP;
             }
             break;
+        default:
+            std::cout << "WARNING: PLAYER IN UNKNOWN STATE\N";
+            break;
     }
-
-    std::cout << state << " " << distance << " " << JUMP_ALLOWED_DISTANCE << "\n";
 
     wasSpacePressed = Keyboard::isKeyPressed(Keyboard::Space);
 }

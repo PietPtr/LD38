@@ -49,7 +49,7 @@ class Game
         int windowHeight = 720;
 
         std::vector<std::string> audioFileNames {  };
-        std::vector<std::string> textureFileNames {  };
+        std::vector<std::string> textureFileNames { "maze.png" };
 
         std::map<std::string, Audio*> sfx;
         std::map<std::string, Texture> textures;
