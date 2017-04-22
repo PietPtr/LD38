@@ -27,18 +27,21 @@ class Player
         Sprite getSprite();
 
         void kill(Time totalTime);
+
+        void setRainbow(bool r) { rainbow = r; }
     protected:
     private:
         const float MAX_JUMP_BUILDUP = 55.0;
         const float MIN_JUMP_BUILDUP = 15.0;
         const float ACCELERATION = 0.01;
         const int DEATH_WAIT_TIME = 100;
+        const float RAINBOW_MULT = 1.2;
         float JUMP_ALLOWED_DISTANCE = 0.0;        // units
         float halfSide = 0.0;                     // units
         float radius = 2.0;                       // units
         float angle = 0.0;                        // degrees
         float distance = 0.0;                     // units from the center
-        float landSpeed = 6.5;                    // degrees per second
+        float landSpeed = 7.5;                    // degrees per second
         float verticalSpeed = 0.0;                // units per second
         float minDistance = 0.0;                  // units
         float jumpBuildup = MIN_JUMP_BUILDUP;
@@ -52,6 +55,9 @@ class Player
 
         long timeOfDeath;
 
+        Color color = Color::Black;
+
+        bool rainbow = false;
 };
 
 #endif // PLAYER_H

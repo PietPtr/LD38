@@ -6,10 +6,22 @@
 #include "Audio.h"
 #include "Player.h"
 #include "Obstacle.h"
+#include "Dot.h"
 
 using namespace sf;
 
-class Player;
+enum Events {
+    EVENT_BACKGROUND,               // Black twinkeling dots appear in the background
+    EVENT_PULSATING_OBSTACLES,      // Obstacles start changing in size slightly
+    EVENT_VIEW_ZOOM,                // The view starts to slowly zoom out and back in
+    EVENT_MOVING_BACKGROUND,        // Background dots start moving in circles
+    EVENT_VIEW_ROTATE,              // The view is not stationary with the player anymore and slowly starts to rotate
+    EVENT_RAINBOW_BG_DOTS,          // Twinkeling dots become rainbow colored
+    EVENT_RAINBOW_OBSTACLES,        // Obstacles get random rainbow colors
+    EVENT_RAINBOW_WORLD,            // World gets rainbow colors
+    EVENT_RAINBOW_BG,               // Background itself gets rainbow colors
+    EVENT_RAINBOW_PLAYER
+};
 
 class Game
 {
@@ -20,6 +32,11 @@ class Game
         const float GRAVITY = 98.1;
         const float DEGREES_PER_OBSTACLE = 18;
         const float OBSTACLE_POS_DEVIATION = 2;
+        const float NEXT_EVENT_TIME = 1;
+        const float MAX_ZOOM = 1.3;
+        const float MIN_ZOOM = 0.8;
+        const float WORLD_RAINDOW_MULT = 0.5;
+        const float WORLD_RAINDOW_MULT2 = 0.6;
 
         Game(RenderWindow* window);
         static Game* instance;
@@ -37,6 +54,8 @@ class Game
         void takeScreenshot();
 
         Vector2f polarToVector(float distance, float angle);
+
+        Color timeToRainbow(long millis);
 
         void restartClock();
         Time getTotalTime() { return totalTime; }
@@ -60,11 +79,38 @@ class Game
         int windowHeight = 720;
 
         std::vector<std::string> audioFileNames {  };
-        std::vector<std::string> textureFileNames { "maze.png", "px.png" };
+        std::vector<std::string> textureFileNames { "maze1.png", "maze2.png", "px.png" };
+
+        Font font;
 
         Player* player = nullptr;
 
         std::vector<Obstacle> obstacles;
+        std::vector<Dot> dots;
+
+        std::map<Events, int> eventTimes =
+        {
+            {EVENT_BACKGROUND,          1 * NEXT_EVENT_TIME},
+            {EVENT_PULSATING_OBSTACLES, 2 * NEXT_EVENT_TIME},
+            {EVENT_VIEW_ZOOM,           3 * NEXT_EVENT_TIME},
+            {EVENT_MOVING_BACKGROUND,   4 * NEXT_EVENT_TIME},
+            {EVENT_VIEW_ROTATE,         5 * NEXT_EVENT_TIME},
+            {EVENT_RAINBOW_BG_DOTS,     6 * NEXT_EVENT_TIME},
+            {EVENT_RAINBOW_BG,          7 * NEXT_EVENT_TIME},
+            {EVENT_RAINBOW_OBSTACLES,   8 * NEXT_EVENT_TIME},
+            {EVENT_RAINBOW_WORLD,       9 * NEXT_EVENT_TIME},
+            {EVENT_RAINBOW_PLAYER,     10 * NEXT_EVENT_TIME},
+        };
+
+        float zoomDirection = 1;
+        float zoomSpeed = 0.001;
+        float zoomAcceleration = 0.005;
+        float zoom = 1;
+
+        float viewRotation = 0.0;
+        float extraViewRotation = 0.0;
+        float viewRotationSpeed = 0.0;
+        float viewRotationAcceleration = 1.0;
 };
 
 

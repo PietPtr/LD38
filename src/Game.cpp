@@ -10,35 +10,42 @@ Game::Game(RenderWindow* _window)
 {
     Game::instance = this;
     window = _window;
+
+    view = View(Vector2f(0, 0), Vector2f(1280, 720));
+    window->setView(view);
 }
 
 void Game::initialize()
 {
     loadAudio(audioFileNames);
     loadTextures(textureFileNames);
+    textures["maze1.png"].setRepeated(true);
+    textures["maze2.png"].setRepeated(true);
 
-    view = View(Vector2f(0, 0), Vector2f(1280, 720));
-    window->setView(view);
+    resetGame();
+}
 
+void Game::resetGame()
+{
     player = new Player();
+    obstacles.clear();
+    dots.clear();
 
-    textures["maze.png"].setRepeated(true);
+    totalTime = Time::Zero;
 
     for (int i = 20; i < 360; i += DEGREES_PER_OBSTACLE)
     {
         restartClock();
         int deviation = randint(-OBSTACLE_POS_DEVIATION, OBSTACLE_POS_DEVIATION);
-        obstacles.push_back(i + deviation);
+        obstacles.push_back(Obstacle(i + deviation));
+        obstacles.push_back(Obstacle(i + deviation));
     }
-    std::cout << obstacles.size() << "\n";
-}
 
-void Game::resetGame()
-{
-    player = nullptr;
-    obstacles.clear();
-
-    initialize();
+    for (int i = 0; i < 1800; i++)
+    {
+        restartClock();
+        dots.push_back(Dot(WORLDSIZE + randint(0, 40), i + (randint(-10, 10) / 10.0)));
+    }
 }
 
 void Game::update()
@@ -77,8 +84,12 @@ void Game::update()
     player->update(dt.asSeconds());
 
     view.setCenter(polarToVector(player->getMinDistance(), player->getAngle() + VIEW_ANGLE_OFFSET));
-    view.setSize(16*5, 9*5);
-    view.setRotation(player->getAngle() + 90 + VIEW_ANGLE_OFFSET);
+    view.setSize(16*5 * zoom, 9*5 * zoom);
+
+    if (totalTime.asSeconds() < eventTimes[EVENT_VIEW_ROTATE]) {
+        view.setRotation(player->getAngle() + 90 + VIEW_ANGLE_OFFSET);
+        viewRotation = view.getRotation();
+    }
 
     if (Keyboard::isKeyPressed(Keyboard::V)) {
         view.setCenter(0, 0);
@@ -99,16 +110,61 @@ void Game::update()
             closestObstacle = i;
         }
 
-        obstacles[i].update(dt.asSeconds());
+        if (totalTime.asSeconds() > eventTimes[EVENT_PULSATING_OBSTACLES])
+        {
+            obstacles[i].setState(OBSTACLE_PULSE);
+        }
+
+        if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_OBSTACLES])
+        {
+            obstacles[i].setState(OBSTACLE_RAINBOW);
+        }
+
+        obstacles[i].update(totalTime.asSeconds());
     }
 
     if (Collision::BoundingBoxTest(player->getSprite(), obstacles[closestObstacle].getSprite())) {
         player->kill(totalTime);
     }
 
-    if (player->getDistance() < WORLDSIZE - 30)
+    if (player->getDistance() < WORLDSIZE - 260)
     {
         resetGame();
+    }
+
+    for (int i = 0; i < dots.size(); i++)
+    {
+        dots[i].update(totalTime.asSeconds());
+
+        if (totalTime.asSeconds() > eventTimes[EVENT_BACKGROUND] && randint(0, 100) > 99)
+            dots[i].turnOn();
+        if (totalTime.asSeconds() > eventTimes[EVENT_MOVING_BACKGROUND])
+            dots[i].setState(DOT_MOVING);
+        if (totalTime.asSeconds() > eventTimes[EVENT_MOVING_BACKGROUND]) {
+            dots[i].setState(DOT_RAINBOW);
+        }
+    }
+
+    if (totalTime.asSeconds() > eventTimes[EVENT_VIEW_ZOOM])
+    {
+        zoomSpeed += zoomAcceleration * dt.asSeconds();
+        zoom += zoomSpeed * zoomDirection;
+        if (zoom > MAX_ZOOM)
+            zoomDirection = -1;
+        if (zoom < MIN_ZOOM)
+            zoomDirection = 1;
+    }
+
+    if (totalTime.asSeconds() > eventTimes[EVENT_VIEW_ROTATE])
+    {
+        viewRotation += viewRotationSpeed * dt.asSeconds();
+        viewRotationSpeed += viewRotationAcceleration * dt.asSeconds();
+        view.setRotation(viewRotation);
+        std::cout << viewRotationSpeed << "\n";
+    }
+
+    if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_PLAYER]) {
+        player->setRainbow(true);
     }
 
     frame++;
@@ -116,9 +172,17 @@ void Game::update()
 
 void Game::draw()
 {
-    window->clear(Color::White);
+    if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_BG])
+        window->clear(timeToRainbow(totalTime.asMilliseconds()));
+    else
+        window->clear(Color::White);
 
     window->setView(view);
+
+    for (int i = 0; i < dots.size(); i++)
+    {
+        dots[i].draw(window);
+    }
 
     for (int i = 0; i < obstacles.size(); i++)
     {
@@ -127,15 +191,37 @@ void Game::draw()
 
     CircleShape world = CircleShape(WORLDSIZE, 1024);
     world.setOrigin(Vector2f(WORLDSIZE, WORLDSIZE));
-    world.setTexture(&textures["maze.png"]);
+    world.setTexture(&textures["maze1.png"]);
     world.setTextureRect({ 0, 0, 200, 200 });
     world.setOutlineColor(Color(0,0,0));
-    world.setOutlineThickness(-4);
+    world.setOutlineThickness(0);
+
+    world.setFillColor(Color(7, 7, 7));
+    if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_WORLD])
+        world.setFillColor(timeToRainbow(totalTime.asMilliseconds() * WORLD_RAINDOW_MULT));
+    window->draw(world);
+
+    world.setTexture(&textures["maze2.png"]);
+    world.setFillColor(Color(0,0,0));
+    if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_WORLD])
+        world.setFillColor(timeToRainbow(totalTime.asMilliseconds() * WORLD_RAINDOW_MULT2));
     window->draw(world);
 
     player->draw(window);
 
     window->display();
+}
+
+Color Game::timeToRainbow(long millis)
+{
+    float value = millis / 200.0;
+
+    Color color;
+    color.r = sin(value + 0) * 255;
+    color.g = sin(value + 2) * 255;
+    color.b = sin(value + 4) * 255;
+
+    return color;
 }
 
 bool Game::isWindowOpen()

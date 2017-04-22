@@ -9,6 +9,7 @@ int main()
 
     RenderWindow window(VideoMode(1280, 720), "Float");
     window.setVerticalSyncEnabled(true);
+    window.setFramerateLimit(60);
 
     Game game(&window);
 

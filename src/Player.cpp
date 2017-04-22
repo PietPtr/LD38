@@ -22,6 +22,9 @@ void Player::update(float dt)
 {
     landSpeed += dt * ACCELERATION;
 
+    if (Keyboard::isKeyPressed(Keyboard::Left))
+        landSpeed = 0;
+
     angle += dt * landSpeed;
 
     distance += dt * verticalSpeed;
@@ -87,7 +90,10 @@ void Player::update(float dt)
             std::cout << "WARNING: PLAYER IN UNKNOWN STATE\N";
             break;
     }
-    std::cout << Game::instance->getTotalTime().asMilliseconds() - timeOfDeath << "\n";
+
+    if (rainbow) {
+        color = Game::instance->timeToRainbow(Game::instance->getTotalTime().asMilliseconds() * RAINBOW_MULT);
+    }
 }
 
 void Player::draw(RenderWindow* window)
@@ -99,7 +105,7 @@ void Player::draw(RenderWindow* window)
     player.setRadius(radius);
     player.setOrigin(Vector2f(radius / flattening, radius));
     player.setPosition(Game::instance->polarToVector(distance, angle));
-    player.setFillColor(Color::Black);
+    player.setFillColor(color);
     player.setScale(flattening, 1);
     player.setRotation(angle);
 

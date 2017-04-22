@@ -15,8 +15,10 @@ Obstacle::Obstacle(float angle)
 
     this->rotation = Game::instance->randint(0, 360);
 
-    rect.width = Game::instance->randint(MIN_SIZE, MAX_SIZE);
-    rect.height = Game::instance->randint(MIN_SIZE, MAX_SIZE);
+    HEIGHT = Game::instance->randint(MIN_SIZE, MAX_SIZE);
+    WIDTH =  Game::instance->randint(MIN_SIZE, MAX_SIZE);
+    rect.width = WIDTH;
+    rect.height = HEIGHT;
     rect.left = getPos().x;
     rect.top = getPos().y;
 
@@ -32,9 +34,17 @@ Obstacle::Obstacle(float angle)
     }
 }
 
-void Obstacle::update(float dt)
+void Obstacle::update(float totalTime)
 {
-
+    if (state == OBSTACLE_PULSE || state == OBSTACLE_RAINBOW)
+    {
+        rect.width = WIDTH + PULSE_AMPLITUDE * sin(totalTime * PULSE_SPEED);
+        rect.height = HEIGHT + PULSE_AMPLITUDE * cos(totalTime * PULSE_SPEED);
+    }
+    if (state == OBSTACLE_RAINBOW)
+    {
+        color = Game::instance->timeToRainbow(Game::instance->getTotalTime().asMilliseconds() * RAINBOW_MULT);
+    }
 }
 
 void Obstacle::draw(RenderWindow* window)
@@ -63,8 +73,6 @@ int Obstacle::isValidObstacle()
         }
     }
 
-    std::cout << inCount << "\n";
-
     return inCount;
 }
 
@@ -75,7 +83,7 @@ Sprite Obstacle::getSprite()
     sprite.setPosition(rect.left, rect.top);
     sprite.setScale(rect.width, rect.height);
     sprite.setTexture(Game::instance->textures["px.png"]);
-    sprite.setColor(Color::Black);
+    sprite.setColor(color);
     sprite.setTextureRect({0, 0, 1, 1});
     sprite.setOrigin(0.5, 0.5);
     sprite.setRotation(rotation);
