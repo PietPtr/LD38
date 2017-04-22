@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include "Game.h"
+#include "Collision.h"
 
 using namespace sf;
 
@@ -22,6 +23,22 @@ void Game::initialize()
     player = new Player();
 
     textures["maze.png"].setRepeated(true);
+
+    for (int i = 20; i < 360; i += DEGREES_PER_OBSTACLE)
+    {
+        restartClock();
+        int deviation = randint(-OBSTACLE_POS_DEVIATION, OBSTACLE_POS_DEVIATION);
+        obstacles.push_back(i + deviation);
+    }
+    std::cout << obstacles.size() << "\n";
+}
+
+void Game::resetGame()
+{
+    player = nullptr;
+    obstacles.clear();
+
+    initialize();
 }
 
 void Game::update()
@@ -55,8 +72,7 @@ void Game::update()
         }
     }
 
-    dt = clock.restart();
-    totalTime += dt;
+    restartClock();
 
     player->update(dt.asSeconds());
 
@@ -69,6 +85,31 @@ void Game::update()
         view.setSize(1280, 720);
         view.setRotation(0);
     }
+    if (Keyboard::isKeyPressed(Keyboard::R)) {
+        view.setRotation(0);
+        view.setCenter(player->getPos());
+    }
+
+    int closestObstacle = 0;
+    for (int i = obstacles.size() - 1; i >= 0; i--)
+    {
+        if ((int)fabs(obstacles[i].getAngle() - player->getAngle()) % 360 <
+            (int)fabs(obstacles[closestObstacle].getAngle() - player->getAngle()) % 360)
+        {
+            closestObstacle = i;
+        }
+
+        obstacles[i].update(dt.asSeconds());
+    }
+
+    if (Collision::BoundingBoxTest(player->getSprite(), obstacles[closestObstacle].getSprite())) {
+        player->kill(totalTime);
+    }
+
+    if (player->getDistance() < WORLDSIZE - 30)
+    {
+        resetGame();
+    }
 
     frame++;
 }
@@ -79,12 +120,10 @@ void Game::draw()
 
     window->setView(view);
 
-    RectangleShape marker(Vector2f(4, 1));
-    marker.setPosition(polarToVector(WORLDSIZE, 5));
-    marker.setRotation(5);
-    marker.setFillColor(Color(0, 0, 0));
-    marker.setOrigin(0.5, 0);
-    window->draw(marker);
+    for (int i = 0; i < obstacles.size(); i++)
+    {
+        obstacles[i].draw(window);
+    }
 
     CircleShape world = CircleShape(WORLDSIZE, 1024);
     world.setOrigin(Vector2f(WORLDSIZE, WORLDSIZE));
@@ -150,4 +189,10 @@ sf::Vector2f Game::polarToVector(float distance, float angle)
     result.y = sin(angle * 0.0174532925) * distance;
 
     return result;
+}
+
+void Game::restartClock()
+{
+    dt = clock.restart();
+    totalTime += dt;
 }
