@@ -20,7 +20,8 @@ Player::Player()
 
 void Player::update(float dt)
 {
-    landSpeed += dt * ACCELERATION;
+    if (!dead)
+        landSpeed += dt * ACCELERATION;
 
     if (Keyboard::isKeyPressed(Keyboard::Left))
         landSpeed = 0;
@@ -29,12 +30,12 @@ void Player::update(float dt)
 
     distance += dt * verticalSpeed;
 
-    if (!isDead)
+    if (!dead)
         distance = distance < JUMP_ALLOWED_DISTANCE ? JUMP_ALLOWED_DISTANCE : distance;
 
     verticalSpeed -= dt * Game::instance->GRAVITY;
 
-    if (!isDead)
+    if (!dead)
         verticalSpeed = distance <= minDistance ? 0 : verticalSpeed;
 
     boundingBox.top = this->getPos().y - halfSide;
@@ -52,7 +53,7 @@ void Player::update(float dt)
                 verticalSpeed = jumpBuildup;
                 jumpBuildup = MIN_JUMP_BUILDUP;
             }
-            if (isDead)
+            if (dead)
                 state = STATE_DEAD_WAIT;
             break;
         case STATE_JUMPING:
@@ -61,7 +62,7 @@ void Player::update(float dt)
                 std::cout << distance << " < " << JUMP_ALLOWED_DISTANCE << ", switching to running state\n";
                 state = STATE_RUNNING;
             }
-            if (isDead)
+            if (dead)
                 state = STATE_DEAD_WAIT;
             break;
         case STATE_RUNNING:
@@ -69,7 +70,7 @@ void Player::update(float dt)
             {
                 state = STATE_BUILDING_UP;
             }
-            if (isDead)
+            if (dead)
                 state = STATE_DEAD_WAIT;
             break;
         case STATE_DEAD_WAIT:
@@ -94,6 +95,8 @@ void Player::update(float dt)
     if (rainbow) {
         color = Game::instance->timeToRainbow(Game::instance->getTotalTime().asMilliseconds() * RAINBOW_MULT);
     }
+
+    std::cout << landSpeed << " degrees per second\n";
 }
 
 void Player::draw(RenderWindow* window)
@@ -119,9 +122,9 @@ void Player::draw(RenderWindow* window)
 
 void Player::kill(Time totalTime)
 {
-    if (!isDead)
+    if (!dead)
         timeOfDeath = totalTime.asMilliseconds();
-    isDead = true;
+    dead = true;
 }
 
 // For collissions...

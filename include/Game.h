@@ -20,7 +20,8 @@ enum Events {
     EVENT_RAINBOW_OBSTACLES,        // Obstacles get random rainbow colors
     EVENT_RAINBOW_WORLD,            // World gets rainbow colors
     EVENT_RAINBOW_BG,               // Background itself gets rainbow colors
-    EVENT_RAINBOW_PLAYER
+    EVENT_RAINBOW_PLAYER,           // Player gets rainbow colors
+    EVENT_THE_LAST_EVENT
 };
 
 class Game
@@ -32,7 +33,7 @@ class Game
         const float GRAVITY = 98.1;
         const float DEGREES_PER_OBSTACLE = 18;
         const float OBSTACLE_POS_DEVIATION = 2;
-        const float NEXT_EVENT_TIME = 12;
+        const float NEXT_EVENT_TIME = 9.81;
         const float MAX_ZOOM = 1.3;
         const float MIN_ZOOM = 0.8;
         const float MAX_ZOOM_SPEED = 0.1;
@@ -73,6 +74,7 @@ class Game
 
         Time dt;
         Time totalTime;
+        Time gameTime;
         Clock clock;
         int frame = 0;
         bool focus = false;
@@ -81,7 +83,7 @@ class Game
         int windowHeight = 720;
 
         std::vector<std::string> audioFileNames {  };
-        std::vector<std::string> textureFileNames { "maze1.png", "maze2.png", "px.png" };
+        std::vector<std::string> textureFileNames { "maze1.png", "maze2.png", "px.png", "last.png" };
 
         Font font;
 
@@ -102,6 +104,7 @@ class Game
             {EVENT_RAINBOW_OBSTACLES,   8 * NEXT_EVENT_TIME},
             {EVENT_RAINBOW_WORLD,       9 * NEXT_EVENT_TIME},
             {EVENT_RAINBOW_PLAYER,     10 * NEXT_EVENT_TIME},
+            {EVENT_THE_LAST_EVENT,     11 * NEXT_EVENT_TIME},
         };
 
         float zoomDirection = 1;
@@ -113,6 +116,8 @@ class Game
         float extraViewRotation = 0.0;
         float viewRotationSpeed = 0.0;
         float viewRotationAcceleration = 1.0;
+
+        bool ready = false;
 };
 
 

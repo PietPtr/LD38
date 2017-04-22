@@ -30,6 +30,18 @@ void Game::initialize()
 
 void Game::resetGame()
 {
+    ready = false;
+
+    zoomDirection = 1;
+    zoomSpeed = 0.001;
+    zoomAcceleration = 0.00005;
+    zoom = 1;
+
+    viewRotation = 0.0;
+    extraViewRotation = 0.0;
+    viewRotationSpeed = 0.0;
+    viewRotationAcceleration = 1.0;
+
     player = new Player();
     obstacles.clear();
     dots.clear();
@@ -68,6 +80,10 @@ void Game::update()
             {
                 takeScreenshot();
             }
+            if (player->isDead())
+            {
+                ready = true;
+            }
         }
         if (event.type == Event::LostFocus) {
             focus = false;
@@ -89,7 +105,7 @@ void Game::update()
     view.setCenter(polarToVector(player->getMinDistance(), player->getAngle() + VIEW_ANGLE_OFFSET));
     view.setSize(16*5 * zoom, 9*5 * zoom);
 
-    if (totalTime.asSeconds() < eventTimes[EVENT_VIEW_ROTATE]) {
+    if (gameTime.asSeconds() < eventTimes[EVENT_VIEW_ROTATE]) {
         view.setRotation(player->getAngle() + 90 + VIEW_ANGLE_OFFSET);
         viewRotation = view.getRotation();
     }
@@ -113,12 +129,12 @@ void Game::update()
             closestObstacle = i;
         }
 
-        if (totalTime.asSeconds() > eventTimes[EVENT_PULSATING_OBSTACLES])
+        if (gameTime.asSeconds() > eventTimes[EVENT_PULSATING_OBSTACLES])
         {
             obstacles[i].setState(OBSTACLE_PULSE);
         }
 
-        if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_OBSTACLES])
+        if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_OBSTACLES])
         {
             obstacles[i].setState(OBSTACLE_RAINBOW);
         }
@@ -130,7 +146,7 @@ void Game::update()
         player->kill(totalTime);
     }
 
-    if (player->getDistance() < WORLDSIZE - 260)
+    if (player->getDistance() < WORLDSIZE - 260 && ready)
     {
         resetGame();
     }
@@ -139,16 +155,16 @@ void Game::update()
     {
         dots[i].update(totalTime.asSeconds());
 
-        if (totalTime.asSeconds() > eventTimes[EVENT_BACKGROUND] && randint(0, 100) > 99)
+        if (gameTime.asSeconds() > eventTimes[EVENT_BACKGROUND] && randint(0, 100) > 99)
             dots[i].turnOn();
-        if (totalTime.asSeconds() > eventTimes[EVENT_MOVING_BACKGROUND])
+        if (gameTime.asSeconds() > eventTimes[EVENT_MOVING_BACKGROUND])
             dots[i].setState(DOT_MOVING);
-        if (totalTime.asSeconds() > eventTimes[EVENT_MOVING_BACKGROUND]) {
+        if (gameTime.asSeconds() > eventTimes[EVENT_MOVING_BACKGROUND]) {
             dots[i].setState(DOT_RAINBOW);
         }
     }
 
-    if (totalTime.asSeconds() > eventTimes[EVENT_VIEW_ZOOM])
+    if (gameTime.asSeconds() > eventTimes[EVENT_VIEW_ZOOM])
     {
         if (zoomSpeed < MAX_ZOOM_SPEED)
             zoomSpeed += zoomAcceleration * dt.asSeconds();
@@ -159,7 +175,7 @@ void Game::update()
             zoomDirection = 1;
     }
 
-    if (totalTime.asSeconds() > eventTimes[EVENT_VIEW_ROTATE])
+    if (gameTime.asSeconds() > eventTimes[EVENT_VIEW_ROTATE])
     {
         viewRotation += viewRotationSpeed * dt.asSeconds();
         viewRotationSpeed += viewRotationAcceleration * dt.asSeconds();
@@ -167,7 +183,7 @@ void Game::update()
         std::cout << viewRotationSpeed << "\n";
     }
 
-    if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_PLAYER]) {
+    if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_PLAYER]) {
         player->setRainbow(true);
     }
 
@@ -176,7 +192,7 @@ void Game::update()
 
 void Game::draw()
 {
-    if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_BG])
+    if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_BG])
         window->clear(timeToRainbow(totalTime.asMilliseconds()));
     else
         window->clear(Color::White);
@@ -201,13 +217,13 @@ void Game::draw()
     world.setOutlineThickness(0);
 
     world.setFillColor(Color(7, 7, 7));
-    if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_WORLD])
+    if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_WORLD])
         world.setFillColor(timeToRainbow(totalTime.asMilliseconds() * WORLD_RAINDOW_MULT));
     window->draw(world);
 
     world.setTexture(&textures["maze2.png"]);
     world.setFillColor(Color(0,0,0));
-    if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_WORLD])
+    if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_WORLD])
         world.setFillColor(timeToRainbow(totalTime.asMilliseconds() * WORLD_RAINDOW_MULT2));
     window->draw(world);
 
@@ -215,17 +231,23 @@ void Game::draw()
 
     window->setView(hudView);
 
-    Text time(std::to_string(totalTime.asSeconds()), font);
+    Text time(std::to_string(gameTime.asSeconds()), font);
     time.setCharacterSize(64);
 
-    if (totalTime.asSeconds() > eventTimes[EVENT_RAINBOW_BG])
+    if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_BG])
         time.setColor(timeToRainbow(totalTime.asMilliseconds() * WORLD_RAINDOW_MULT2));
     else
         time.setColor(Color::Black);
 
     time.setPosition(Vector2f(-630, -360));
-    std::cout << time.getPosition().x << " " << time.getPosition().y << "\n";
     window->draw(time);
+
+    if (gameTime.asSeconds() > eventTimes[EVENT_THE_LAST_EVENT] && frame % 4 == 0) {
+        Sprite l;
+        l.setTexture(textures["last.png"]);
+        l.setPosition(Vector2f(-640, -360));
+        window->draw(l);
+    }
 
     window->display();
 }
@@ -299,4 +321,6 @@ void Game::restartClock()
 {
     dt = clock.restart();
     totalTime += dt;
+    if (!player->isDead())
+        gameTime = totalTime;
 }

@@ -27,13 +27,14 @@ class Player
         Sprite getSprite();
 
         void kill(Time totalTime);
+        bool isDead() { return dead; }
 
         void setRainbow(bool r) { rainbow = r; }
     protected:
     private:
         const float MAX_JUMP_BUILDUP = 55.0;
         const float MIN_JUMP_BUILDUP = 15.0;
-        const float ACCELERATION = 0.01;
+        const float ACCELERATION = 0.04;
         const int DEATH_WAIT_TIME = 100;
         const float RAINBOW_MULT = 1.2;
         float JUMP_ALLOWED_DISTANCE = 0.0;        // units
@@ -49,11 +50,11 @@ class Player
 
         State state;
 
-        bool isDead = false;
+        bool dead = false;
 
         FloatRect boundingBox;
 
-        long timeOfDeath;
+        long timeOfDeath = -1;
 
         Color color = Color::Black;
 
