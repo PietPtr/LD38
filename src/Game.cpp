@@ -142,9 +142,13 @@ void Game::update()
         obstacles[i].update(totalTime.asSeconds());
     }
 
-    if (Collision::BoundingBoxTest(player->getSprite(), obstacles[closestObstacle].getSprite())) {
-        player->kill(totalTime);
+    for (int i = -1; i <= 1; i++) {
+        if (Collision::BoundingBoxTest(player->getSprite(), obstacles[closestObstacle + i].getSprite())) {
+            player->kill(totalTime);
+        }
     }
+
+
 
     if (player->getDistance() < WORLDSIZE - 260 && ready)
     {
@@ -180,7 +184,6 @@ void Game::update()
         viewRotation += viewRotationSpeed * dt.asSeconds();
         viewRotationSpeed += viewRotationAcceleration * dt.asSeconds();
         view.setRotation(viewRotation);
-        std::cout << viewRotationSpeed << "\n";
     }
 
     if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_PLAYER]) {
@@ -188,6 +191,10 @@ void Game::update()
     }
 
     frame++;
+
+    if (frame % 60 == 0) {
+        std::cout << 1 / dt.asSeconds() << " FPS\n";
+    }
 }
 
 void Game::draw()

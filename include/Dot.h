@@ -29,7 +29,7 @@ class Dot
         const float MAX_RADIUS = 0.1;
         const float MOVE_DISTANCE = 0.2;
         const float MOVE_SPEED = 3;
-        const float RADIUS_GROW = 0.0;
+        const float RADIUS_GROW = 0.001;
         const float SEC_MAX_RADIUS = 0.3;
 
         long turnOnTime = 0;

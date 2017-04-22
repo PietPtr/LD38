@@ -59,7 +59,6 @@ void Player::update(float dt)
         case STATE_JUMPING:
             if (distance <= JUMP_ALLOWED_DISTANCE)
             {
-                std::cout << distance << " < " << JUMP_ALLOWED_DISTANCE << ", switching to running state\n";
                 state = STATE_RUNNING;
             }
             if (dead)
@@ -95,8 +94,6 @@ void Player::update(float dt)
     if (rainbow) {
         color = Game::instance->timeToRainbow(Game::instance->getTotalTime().asMilliseconds() * RAINBOW_MULT);
     }
-
-    std::cout << landSpeed << " degrees per second\n";
 }
 
 void Player::draw(RenderWindow* window)
