@@ -24,6 +24,12 @@ enum Events {
     EVENT_THE_LAST_EVENT
 };
 
+enum GameState {
+    START,
+    GAME,
+    GAMEOVER
+};
+
 class Game
 {
     public:
@@ -66,11 +72,15 @@ class Game
         std::map<std::string, Texture> textures;
 
         void resetGame();
+
+        GameState getGameState() { return state; }
     protected:
     private:
         RenderWindow* window;
         View view;
         View hudView;
+
+        GameState state = START;
 
         Time dt;
         Time totalTime;
@@ -87,7 +97,9 @@ class Game
 
         Font font;
 
-        Player* player = nullptr;
+        //Player* player = nullptr;
+        std::vector<Player> players;
+        int focusedPlayer = 0;
 
         std::vector<Obstacle> obstacles;
         std::vector<Dot> dots;

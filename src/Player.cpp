@@ -4,8 +4,11 @@
 
 using namespace sf;
 
-Player::Player()
+Player::Player(Keyboard::Key jumpKey, float angle)
 {
+    this->jumpKey = jumpKey;
+    this->angle = angle;
+
     distance = Game::instance->WORLDSIZE + radius;
     minDistance = distance;
     JUMP_ALLOWED_DISTANCE = minDistance;
@@ -20,15 +23,15 @@ Player::Player()
 
 void Player::update(float dt)
 {
-    if (!dead)
+    if (Game::instance->getGameState() == GAME || Game::instance->getGameState() == GAMEOVER ) {
+        std::cout << "land speed " << landSpeed << "\n";
         landSpeed += dt * ACCELERATION;
 
-    if (Keyboard::isKeyPressed(Keyboard::Left))
-        landSpeed = 0;
+        angle += dt * landSpeed;
 
-    angle += dt * landSpeed;
+        distance += dt * verticalSpeed;
+    }
 
-    distance += dt * verticalSpeed;
 
     if (!dead)
         distance = distance < JUMP_ALLOWED_DISTANCE ? JUMP_ALLOWED_DISTANCE : distance;
@@ -47,7 +50,7 @@ void Player::update(float dt)
             jumpBuildup += dt * buildupSpeed;
             jumpBuildup = jumpBuildup > MAX_JUMP_BUILDUP ? MAX_JUMP_BUILDUP : jumpBuildup;
 
-            if (!Keyboard::isKeyPressed(Keyboard::Space))
+            if (!Keyboard::isKeyPressed(jumpKey))
             {
                 state = STATE_JUMPING;
                 verticalSpeed = jumpBuildup;
@@ -65,7 +68,7 @@ void Player::update(float dt)
                 state = STATE_DEAD_WAIT;
             break;
         case STATE_RUNNING:
-            if (Keyboard::isKeyPressed(Keyboard::Space))
+            if (Keyboard::isKeyPressed(jumpKey))
             {
                 state = STATE_BUILDING_UP;
             }

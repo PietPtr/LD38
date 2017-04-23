@@ -16,7 +16,7 @@ enum State
 class Player
 {
     public:
-        Player();
+        Player(Keyboard::Key jumpKey, float angle);
         void update(float dt);
         void draw(RenderWindow* window);
 
@@ -30,6 +30,8 @@ class Player
         bool isDead() { return dead; }
 
         void setRainbow(bool r) { rainbow = r; }
+
+        Keyboard::Key getKey() { return jumpKey; }
     protected:
     private:
         const float MAX_JUMP_BUILDUP = 55.0;
@@ -59,6 +61,8 @@ class Player
         Color color = Color::Black;
 
         bool rainbow = false;
+
+        Keyboard::Key jumpKey;
 };
 
 #endif // PLAYER_H

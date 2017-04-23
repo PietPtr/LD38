@@ -42,11 +42,17 @@ void Game::resetGame()
     viewRotationSpeed = 0.0;
     viewRotationAcceleration = 1.0;
 
-    player = new Player();
+    players.clear();
     obstacles.clear();
     dots.clear();
 
+    players.push_back(Player(Keyboard::Space, 0));
+
     totalTime = Time::Zero;
+
+    gameTime = Time::Zero;
+
+    state = START;
 
     for (int i = 20; i < 360; i += DEGREES_PER_OBSTACLE)
     {
@@ -80,9 +86,32 @@ void Game::update()
             {
                 takeScreenshot();
             }
-            if (player->isDead())
+            if (focusedPlayer == -1)
             {
                 ready = true;
+            }
+            if (state == START)
+            {
+                if (event.key.code == Keyboard::Space) {
+                    state = GAME;
+                }
+                else
+                {
+                    bool addPlayer = true;
+                    for (int i = 0; i < players.size(); i++) {
+                        if (players[i].getKey() == event.key.code) {
+                            addPlayer = false;
+                        }
+                    }
+
+                    if (addPlayer) {
+                        players.push_back(Player(event.key.code, players.size()));
+                        std::cout << "Added a player with key " << event.key.code << "\n";
+                    }
+                }
+            }
+            if (state == GAMEOVER) {
+                resetGame();
             }
         }
         if (event.type == Event::LostFocus) {
@@ -100,13 +129,23 @@ void Game::update()
 
     restartClock();
 
-    player->update(dt.asSeconds());
-
-    view.setCenter(polarToVector(player->getMinDistance(), player->getAngle() + VIEW_ANGLE_OFFSET));
+    view.setCenter(polarToVector(players[focusedPlayer].getMinDistance(), players[focusedPlayer].getAngle() + VIEW_ANGLE_OFFSET));
     view.setSize(16*5 * zoom, 9*5 * zoom);
 
+    bool allDead = true;
+    for (int i = 0; i < players.size(); i++) {
+        players[i].update(dt.asSeconds());
+        if (!players[i].isDead())
+            focusedPlayer = i;
+        allDead &= players[i].isDead();
+    }
+
+    if (allDead) {
+        state = GAMEOVER;
+    }
+
     if (gameTime.asSeconds() < eventTimes[EVENT_VIEW_ROTATE]) {
-        view.setRotation(player->getAngle() + 90 + VIEW_ANGLE_OFFSET);
+        view.setRotation(players[focusedPlayer].getAngle() + 90 + VIEW_ANGLE_OFFSET);
         viewRotation = view.getRotation();
     }
 
@@ -117,78 +156,85 @@ void Game::update()
     }
     if (Keyboard::isKeyPressed(Keyboard::R)) {
         view.setRotation(0);
-        view.setCenter(player->getPos());
+        view.setCenter(players[focusedPlayer].getPos());
     }
 
-    int closestObstacle = 0;
-    for (int i = obstacles.size() - 1; i >= 0; i--)
+    if (state == GAME)
     {
-        if ((int)fabs(obstacles[i].getAngle() - player->getAngle()) % 360 <
-            (int)fabs(obstacles[closestObstacle].getAngle() - player->getAngle()) % 360)
+        int closestObstacle = 0;
+        for (int i = obstacles.size() - 1; i >= 0; i--)
         {
-            closestObstacle = i;
+            if ((int)fabs(obstacles[i].getAngle() - players[focusedPlayer].getAngle()) % 360 <
+                (int)fabs(obstacles[closestObstacle].getAngle() - players[focusedPlayer].getAngle()) % 360)
+            {
+                closestObstacle = i;
+            }
+
+            if (gameTime.asSeconds() > eventTimes[EVENT_PULSATING_OBSTACLES])
+            {
+                obstacles[i].setState(OBSTACLE_PULSE);
+            }
+
+            if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_OBSTACLES])
+            {
+                obstacles[i].setState(OBSTACLE_RAINBOW);
+            }
+
+            obstacles[i].update(totalTime.asSeconds());
         }
 
-        if (gameTime.asSeconds() > eventTimes[EVENT_PULSATING_OBSTACLES])
+        for (int i = -1; i <= 1; i++) {
+            for (int p = 0; p < players.size(); p++) {
+                if (Collision::BoundingBoxTest(players[p].getSprite(), obstacles[closestObstacle + i].getSprite())) {
+                    players[p].kill(totalTime);
+                }
+            }
+        }
+
+
+        if (focusedPlayer == -1 && ready)
         {
-            obstacles[i].setState(OBSTACLE_PULSE);
+            resetGame();
         }
 
-        if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_OBSTACLES])
+        for (int i = 0; i < dots.size(); i++)
         {
-            obstacles[i].setState(OBSTACLE_RAINBOW);
+            dots[i].update(totalTime.asSeconds());
+
+            if (gameTime.asSeconds() > eventTimes[EVENT_BACKGROUND] && randint(0, 100) > 99)
+                dots[i].turnOn();
+            if (gameTime.asSeconds() > eventTimes[EVENT_MOVING_BACKGROUND])
+                dots[i].setState(DOT_MOVING);
+            if (gameTime.asSeconds() > eventTimes[EVENT_MOVING_BACKGROUND]) {
+                dots[i].setState(DOT_RAINBOW);
+            }
         }
 
-        obstacles[i].update(totalTime.asSeconds());
-    }
+        if (gameTime.asSeconds() > eventTimes[EVENT_VIEW_ZOOM])
+        {
+            if (zoomSpeed < MAX_ZOOM_SPEED)
+                zoomSpeed += zoomAcceleration * dt.asSeconds();
+            zoom += zoomSpeed * zoomDirection;
+            if (zoom > MAX_ZOOM)
+                zoomDirection = -1;
+            if (zoom < MIN_ZOOM)
+                zoomDirection = 1;
+        }
 
-    for (int i = -1; i <= 1; i++) {
-        if (Collision::BoundingBoxTest(player->getSprite(), obstacles[closestObstacle + i].getSprite())) {
-            player->kill(totalTime);
+        if (gameTime.asSeconds() > eventTimes[EVENT_VIEW_ROTATE])
+        {
+            viewRotation += viewRotationSpeed * dt.asSeconds();
+            viewRotationSpeed += viewRotationAcceleration * dt.asSeconds();
+            view.setRotation(viewRotation);
+        }
+
+        if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_PLAYER]) {
+            for(int i = 0; i < players.size(); i++) {
+                players[i].setRainbow(true);
+            }
         }
     }
 
-
-
-    if (player->getDistance() < WORLDSIZE - 260 && ready)
-    {
-        resetGame();
-    }
-
-    for (int i = 0; i < dots.size(); i++)
-    {
-        dots[i].update(totalTime.asSeconds());
-
-        if (gameTime.asSeconds() > eventTimes[EVENT_BACKGROUND] && randint(0, 100) > 99)
-            dots[i].turnOn();
-        if (gameTime.asSeconds() > eventTimes[EVENT_MOVING_BACKGROUND])
-            dots[i].setState(DOT_MOVING);
-        if (gameTime.asSeconds() > eventTimes[EVENT_MOVING_BACKGROUND]) {
-            dots[i].setState(DOT_RAINBOW);
-        }
-    }
-
-    if (gameTime.asSeconds() > eventTimes[EVENT_VIEW_ZOOM])
-    {
-        if (zoomSpeed < MAX_ZOOM_SPEED)
-            zoomSpeed += zoomAcceleration * dt.asSeconds();
-        zoom += zoomSpeed * zoomDirection;
-        if (zoom > MAX_ZOOM)
-            zoomDirection = -1;
-        if (zoom < MIN_ZOOM)
-            zoomDirection = 1;
-    }
-
-    if (gameTime.asSeconds() > eventTimes[EVENT_VIEW_ROTATE])
-    {
-        viewRotation += viewRotationSpeed * dt.asSeconds();
-        viewRotationSpeed += viewRotationAcceleration * dt.asSeconds();
-        view.setRotation(viewRotation);
-    }
-
-    if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_PLAYER]) {
-        player->setRainbow(true);
-    }
 
     frame++;
 
@@ -234,7 +280,9 @@ void Game::draw()
         world.setFillColor(timeToRainbow(totalTime.asMilliseconds() * WORLD_RAINDOW_MULT2));
     window->draw(world);
 
-    player->draw(window);
+    for (int i = 0; i < players.size(); i++) {
+        players[i].draw(window);
+    }
 
     window->setView(hudView);
 
@@ -254,6 +302,14 @@ void Game::draw()
         l.setTexture(textures["last.png"]);
         l.setPosition(Vector2f(-640, -360));
         window->draw(l);
+    }
+
+    if (state == START) {
+        Text start("PRESS SPACE TO START", font);
+        start.setCharacterSize(64);
+        start.setOrigin(300, 96);
+        start.setColor(Color::Black);
+        window->draw(start);
     }
 
     window->display();
@@ -328,6 +384,6 @@ void Game::restartClock()
 {
     dt = clock.restart();
     totalTime += dt;
-    if (!player->isDead())
-        gameTime = totalTime;
+    if (state == GAME)
+        gameTime += dt;
 }
