@@ -7,7 +7,7 @@ int main()
 {
     srand(time(NULL));
 
-    RenderWindow window(VideoMode(1280, 720), "Float");
+    RenderWindow window(VideoMode(1920, 1080), "Hop up!");
     window.setVerticalSyncEnabled(true);
     window.setFramerateLimit(60);
 
