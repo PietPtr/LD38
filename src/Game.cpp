@@ -318,7 +318,7 @@ void Game::draw()
         window->draw(l);
     }
 
-    if (state == START || state == WARNING) {
+    if (state == START) {
         Text start("HOLD SPACE TO START", font);
         start.setCharacterSize(64);
         start.setOrigin(start.getLocalBounds().width / 2, 96);
@@ -354,6 +354,48 @@ void Game::draw()
     }
 
     if (state == GAMEOVER) {
+        Color overColor = Color::Black;
+        if (gameTime.asSeconds() > eventTimes[EVENT_RAINBOW_BG])
+            overColor = timeToRainbow(totalTime.asMilliseconds() * 5);
+
+        Text over("GAME OVER", font);
+        over.setCharacterSize(128);
+        over.setOrigin(over.getLocalBounds().width / 2, 0);
+        over.setPosition(1280/2, 0);
+        over.setColor(overColor);
+        window->draw(over);
+
+
+        if (players.size() > 1) {
+            std::string winStr = "";
+            winStr += "PLAYER ";
+            winStr += Game::getKeyName(players[focusedPlayer].getKey());
+            winStr += " WON!";
+            Text win(winStr, font);
+            win.setCharacterSize(64);
+            win.setOrigin(win.getLocalBounds().width / 2, 0);
+            win.setPosition(1280/2, 180);
+            win.setColor(overColor);
+            window->draw(win);
+        }
+
+        std::string scoreStr = "SCORE: " + std::to_string(gameTime.asSeconds()) + " SECONDS";
+        Text score(scoreStr, font);
+        score.setCharacterSize(64);
+        score.setOrigin(score.getLocalBounds().width / 2, 0);
+        score.setPosition(1280/2, 120);
+        score.setColor(overColor);
+        window->draw(score);
+
+        Text restart("PRESS ANY KEY TO CONTINUE", font);
+        restart.setCharacterSize(32);
+        restart.setOrigin(restart.getLocalBounds().width / 2, 0);
+        restart.setPosition(1280/2, 300);
+        if ((int)(totalTime.asSeconds() * 3) % 2 == 0 && gameTime.asSeconds() < eventTimes[EVENT_RAINBOW_BG])
+            restart.setColor(Color::White);
+        else
+            restart.setColor(overColor);
+        window->draw(restart);
 
     }
 

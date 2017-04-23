@@ -89,7 +89,7 @@ void Player::update(float dt)
             verticalSpeed -= dt * Game::instance->GRAVITY;
             break;
         default:
-            std::cout << "WARNING: PLAYER IN UNKNOWN STATE\N";
+            std::cout << "WARNING: PLAYER IN UNKNOWN STATE\n";
             break;
     }
 
