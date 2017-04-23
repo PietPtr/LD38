@@ -25,6 +25,7 @@ enum Events {
 };
 
 enum GameState {
+    WARNING,
     START,
     GAME,
     GAMEOVER
@@ -34,6 +35,7 @@ class Game
 {
     public:
         const double PI = 3.14159265359;
+        const float WARNING_TIME = 3;
         const float WORLDSIZE = 260;
         const float VIEW_ANGLE_OFFSET = 5;
         const float GRAVITY = 98.1;
@@ -45,6 +47,8 @@ class Game
         const float MAX_ZOOM_SPEED = 0.1;
         const float WORLD_RAINDOW_MULT = 0.5;
         const float WORLD_RAINDOW_MULT2 = 0.6;
+        const float MAX_PLAYERS = 5;
+        const std::vector<Keyboard::Key> FORBIDDEN_JUMP_KEYS { Keyboard::F1 };
 
         Game(RenderWindow* window);
         static Game* instance;
@@ -70,17 +74,20 @@ class Game
 
         std::map<std::string, Audio*> sfx;
         std::map<std::string, Texture> textures;
+        Font font;
 
         void resetGame();
 
         GameState getGameState() { return state; }
+
+        static std::string getKeyName(sf::Keyboard::Key key);
     protected:
     private:
         RenderWindow* window;
         View view;
         View hudView;
 
-        GameState state = START;
+        GameState state = WARNING;
 
         Time dt;
         Time totalTime;
@@ -95,7 +102,6 @@ class Game
         std::vector<std::string> audioFileNames {  };
         std::vector<std::string> textureFileNames { "maze1.png", "maze2.png", "px.png", "last.png" };
 
-        Font font;
 
         //Player* player = nullptr;
         std::vector<Player> players;

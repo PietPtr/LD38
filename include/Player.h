@@ -18,7 +18,7 @@ class Player
     public:
         Player(Keyboard::Key jumpKey, float angle);
         void update(float dt);
-        void draw(RenderWindow* window);
+        void draw(RenderWindow* window, bool drawKey);
 
         Vector2f getPos();
         float getAngle() { return angle; }
@@ -32,6 +32,7 @@ class Player
         void setRainbow(bool r) { rainbow = r; }
 
         Keyboard::Key getKey() { return jumpKey; }
+        long getTimeOfDeath() { return timeOfDeath; }
     protected:
     private:
         const float MAX_JUMP_BUILDUP = 55.0;

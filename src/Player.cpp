@@ -24,7 +24,6 @@ Player::Player(Keyboard::Key jumpKey, float angle)
 void Player::update(float dt)
 {
     if (Game::instance->getGameState() == GAME || Game::instance->getGameState() == GAMEOVER ) {
-        std::cout << "land speed " << landSpeed << "\n";
         landSpeed += dt * ACCELERATION;
 
         angle += dt * landSpeed;
@@ -99,7 +98,7 @@ void Player::update(float dt)
     }
 }
 
-void Player::draw(RenderWindow* window)
+void Player::draw(RenderWindow* window, bool drawKey)
 {
     float flattening = 1 - 0.3 * ((jumpBuildup - MIN_JUMP_BUILDUP) / (MAX_JUMP_BUILDUP + MIN_JUMP_BUILDUP));
 
@@ -117,7 +116,24 @@ void Player::draw(RenderWindow* window)
 
     window->draw(player);
 
-    //window->draw(getSprite());
+    if (drawKey) {
+        std::string fullKeyName = Game::getKeyName(jumpKey);
+        std::string shortKeyName = fullKeyName.substr(0, 5);
+        Text key(shortKeyName, Game::instance->font);
+        key.setCharacterSize(32);
+        key.setStyle(Text::Bold);
+        key.setPosition(getPos().x, getPos().y);
+        key.setOrigin(key.getLocalBounds().width / 2, key.getLocalBounds().height / 2);
+        key.setColor(Color::White);
+
+        if (rainbow) {
+            key.setColor(Color(color.g, color.b, color.r));
+        }
+
+        key.setRotation(angle + 90);
+        key.setScale(1.0/32, 1.0/32);
+        window->draw(key);
+    }
 }
 
 void Player::kill(Time totalTime)
